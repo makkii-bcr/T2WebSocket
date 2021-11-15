@@ -1,0 +1,25 @@
+native JSON;
+
+ox=-9999;
+oy=-9999;
+x=rnd($screenWidth);
+y=rnd($screenHeight);
+alpha=255;
+while(true){
+    if($myNo!=null)p=$myNo-1;else p=$pat_base+11;
+    if(getkey(37)||$pad.getLeft() )x-=3;
+    if(getkey(38)||$pad.getUp()   )y-=3;
+    if(getkey(39)||$pad.getRight())x+=3;
+    if(getkey(40)||$pad.getDown() )y+=3;
+    x=clamp(0,$screenWidth,x);
+    y=clamp(0,$screenHeight,y);
+    if(x!=ox||y!=oy){
+        ox=x;
+        oy=y;
+        var o={mes:"playerXY",playerNo:$myNo,x,y};
+        $ws.send(JSON.stringify(o));
+    }
+    update();
+}
+
+

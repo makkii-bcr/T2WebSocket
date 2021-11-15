@@ -1,0 +1,27 @@
+native window;
+
+updateEx(5);
+
+var host = window.document.location.host.replace(/:.*/, '');
+
+$port=8888;
+if(host=="phmobapkconpplimipcfhkkmdfiklnkh"){
+    $connectURL="localhost:"+$port;
+}else{
+    $connectURL=host+":"+$port;
+}
+// $InputBox.useNative=true;
+// $connectURL=$InputBox.prompt("URL",host+":58889");
+
+$pad=new Pad{buttonCnt:4,alpha:255,active:false};
+$pad.alpha=0;
+$ws=new WS;
+new MyChar;
+
+while(true){
+    if(getkey(1)==0&&$touches[0].touched==1){
+        $pad.alpha=255;
+        $pad.active=true;
+    }
+    update();
+}

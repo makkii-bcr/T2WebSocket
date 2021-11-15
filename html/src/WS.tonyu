@@ -1,0 +1,46 @@
+native WebSocket;
+native console;
+native JSON;
+
+// WebSocketAPI(JavaScriptのAPI)
+sock = new WebSocket("ws://"+$connectURL);
+sock.addEventListener("open", \(e){
+    print("open");
+});
+sock.addEventListener("message", \(e){
+    //print("message", e.data);
+    recvProc(e.data);
+});
+sock.addEventListener("close", \(e){
+    print("close");
+});
+sock.addEventListener("error", \(e){
+    print("error");
+});
+
+$mirrorAry=[];
+
+\send(d){
+    if (sock.readyState==1) { // WebSocket.OPEN
+        sock.send(d);
+    }
+}
+\recvProc(d){
+    var obj = JSON.parse(d);
+    
+    if (obj.mes=="_start"){
+        $myNo=obj.playerNo;
+        print("myNo:"+$myNo/*, "playerCnt:"+obj.playerCnt*/);
+        
+    } else if (obj.mes=="playerXY"){
+        var playerNo=obj.playerNo;
+        var m=$mirrorAry[playerNo-1];
+        if (!m) {
+            m=new Mirror{playerNo,x:-999,y:-999,p:playerNo-1,zOrder:10};
+            $mirrorAry[playerNo-1]=m;
+        }
+        m.x = obj.x;
+        m.y = obj.y;
+    }
+}
+

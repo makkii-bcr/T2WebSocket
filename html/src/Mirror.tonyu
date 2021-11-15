@@ -1,0 +1,6 @@
+
+while(true){
+    alpha = playerNo==$myNo ? 64 : 255;
+    drawText(x-16,y+16,playerNo+"P","rgb(255,255,255)",16);
+    update();
+}
