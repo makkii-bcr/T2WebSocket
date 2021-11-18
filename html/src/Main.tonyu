@@ -1,14 +1,17 @@
 native window;
+native WebSite;
 
 updateEx(5);
 
-var host = window.document.location.host.replace(/:.*/, '');
+//var host = window.document.location.host.replace(/:.*/, '');
+var host = "t2ws.mkbcr.net";
 
-$port=8888;
-if(host=="phmobapkconpplimipcfhkkmdfiklnkh"){
-    $connectURL="localhost:"+$port;
+if(WebSite.isNW){
+    $port=58888;
+    $connectURL="localhost";
 }else{
-    $connectURL=host+":"+$port;
+    $port=443;
+    $connectURL=host;
 }
 // $InputBox.useNative=true;
 // $connectURL=$InputBox.prompt("URL",host+":58889");
@@ -18,10 +21,13 @@ $pad.alpha=0;
 $ws=new WS;
 new MyChar;
 
+$latency="";
 while(true){
     if(getkey(1)==0&&$touches[0].touched==1){
         $pad.alpha=255;
         $pad.active=true;
     }
+    // drawTextEx{x:$screenWidth-2,y:2,text:"latency:"+$latency+"ms",size:16,align:"right"};
+    drawText($screenWidth-2-200,2,"ping:"+$latency+"ms","rgb(255,255,255)",16);
     update();
 }

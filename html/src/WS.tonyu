@@ -1,21 +1,24 @@
 native WebSocket;
+native performance;
 native console;
 native JSON;
 
 // WebSocketAPI(JavaScriptのAPI)
-sock = new WebSocket("ws://"+$connectURL);
+var url = "wss://"+$connectURL+":"+$port;
+print(url);
+sock = new WebSocket(url);
 sock.addEventListener("open", \(e){
-    print("open");
+    print("open", e);
 });
 sock.addEventListener("message", \(e){
-    //print("message", e.data);
+    // print("message", e.data);
     recvProc(e.data);
 });
 sock.addEventListener("close", \(e){
-    print("close");
+    print("close", e);
 });
 sock.addEventListener("error", \(e){
-    print("error");
+    print("error", e);
 });
 
 $mirrorAry=[];
@@ -28,19 +31,36 @@ $mirrorAry=[];
 \recvProc(d){
     var obj = JSON.parse(d);
     
-    if (obj.mes=="_start"){
+    if (obj.mes=="_start"){ // 通信開始時の情報
         $myNo=obj.playerNo;
-        print("myNo:"+$myNo/*, "playerCnt:"+obj.playerCnt*/);
+        print("myNo:"+($myNo+1)+"P");
         
-    } else if (obj.mes=="playerXY"){
+    } else if (obj.mes=="_close"){ // 誰かが切断した
+        var m=$mirrorAry[obj.playerNo];
+        if (m) {
+            m.otime=60*25;
+        }
+        print("close:", (obj.playerNo+1)+"P");
+        
+    } else if (obj.mes=="_ping"){ // 通信が生きているかの確認がサーバーからくるので返す
+        var o={mes:"_ping"};
+        send(JSON.stringify(obj));
+        
+    } else if (obj.mes=="playerXY"){ // ゲームの情報（あるキャラの位置）
         var playerNo=obj.playerNo;
-        var m=$mirrorAry[playerNo-1];
+        if (playerNo==null) return;
+        var m=$mirrorAry[playerNo];
         if (!m) {
-            m=new Mirror{playerNo,x:-999,y:-999,p:playerNo-1,zOrder:10};
-            $mirrorAry[playerNo-1]=m;
+            print("connect:", (playerNo+1)+"P");
+            m=new Mirror{playerNo,x:-999,y:-999,p:playerNo,zOrder:10,otime:0};
+            $mirrorAry[playerNo]=m;
         }
         m.x = obj.x;
         m.y = obj.y;
+        m.otime = 0;
+        if (playerNo==$myNo) { // ラグを計算
+            $latency = floor(performance.now() - obj.time);
+        }
     }
 }
 

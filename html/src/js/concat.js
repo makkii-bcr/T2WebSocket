@@ -11,20 +11,22 @@ Tonyu.klass.define({
         var _this=this;
         
         _this.updateEx(5);
-        _this.host = window.document.location.host.replace(/:.*/,'');
+        _this.host = "t2ws.mkbcr.net";
         
-        Tonyu.globals.$port=8888;
-        if (_this.host=="phmobapkconpplimipcfhkkmdfiklnkh") {
-          Tonyu.globals.$connectURL="localhost:"+Tonyu.globals.$port;
+        if (WebSite.isNW) {
+          Tonyu.globals.$port=58888;
+          Tonyu.globals.$connectURL="localhost";
           
         } else {
-          Tonyu.globals.$connectURL=_this.host+":"+Tonyu.globals.$port;
+          Tonyu.globals.$port=443;
+          Tonyu.globals.$connectURL=_this.host;
           
         }
         Tonyu.globals.$pad=new Tonyu.classes.kernel.Pad({buttonCnt: 4,alpha: 255,active: false});
         Tonyu.globals.$pad.alpha=0;
         Tonyu.globals.$ws=new Tonyu.classes.user.WS;
         new Tonyu.classes.user.MyChar;
+        Tonyu.globals.$latency="";
         while (true) {
           Tonyu.checkLoop();
           if (_this.getkey(1)==0&&Tonyu.globals.$touches[0].touched==1) {
@@ -32,6 +34,7 @@ Tonyu.klass.define({
             Tonyu.globals.$pad.active=true;
             
           }
+          _this.drawText(Tonyu.globals.$screenWidth-2-200,2,"ping:"+Tonyu.globals.$latency+"ms","rgb(255,255,255)",16);
           _this.update();
           
         }
@@ -52,26 +55,29 @@ Tonyu.klass.define({
               __pc=1;return;
             case 1:
               
-              _this.host = window.document.location.host.replace(/:.*/,'');
+              _this.host = "t2ws.mkbcr.net";
               
-              Tonyu.globals.$port=8888;
-              if (_this.host=="phmobapkconpplimipcfhkkmdfiklnkh") {
-                Tonyu.globals.$connectURL="localhost:"+Tonyu.globals.$port;
+              if (WebSite.isNW) {
+                Tonyu.globals.$port=58888;
+                Tonyu.globals.$connectURL="localhost";
                 
               } else {
-                Tonyu.globals.$connectURL=_this.host+":"+Tonyu.globals.$port;
+                Tonyu.globals.$port=443;
+                Tonyu.globals.$connectURL=_this.host;
                 
               }
               Tonyu.globals.$pad=new Tonyu.classes.kernel.Pad({buttonCnt: 4,alpha: 255,active: false});
               Tonyu.globals.$pad.alpha=0;
               Tonyu.globals.$ws=new Tonyu.classes.user.WS;
               new Tonyu.classes.user.MyChar;
+              Tonyu.globals.$latency="";
             case 2:
               if (_this.getkey(1)==0&&Tonyu.globals.$touches[0].touched==1) {
                 Tonyu.globals.$pad.alpha=255;
                 Tonyu.globals.$pad.active=true;
                 
               }
+              _this.drawText(Tonyu.globals.$screenWidth-2-200,2,"ping:"+Tonyu.globals.$latency+"ms","rgb(255,255,255)",16);
               _this.fiber$update(_thread);
               __pc=3;return;
             case 3:
@@ -104,7 +110,17 @@ Tonyu.klass.define({
         while (true) {
           Tonyu.checkLoop();
           _this.alpha=_this.playerNo==Tonyu.globals.$myNo?64:255;
-          _this.drawText(_this.x-16,_this.y+16,_this.playerNo+"P","rgb(255,255,255)",16);
+          if (_this.otime>=60*20) {
+            _this.alpha*=(60*30-_this.otime)/(60*10);
+          }
+          if (_this.alpha<=0) {
+            _this.alpha=0;
+            
+          } else {
+            _this.drawText(_this.x-12,_this.y+16,(_this.playerNo+1)+"P","rgb(255,255,255)",16);
+            
+          }
+          _this.otime++;
           _this.update();
           
         }
@@ -123,7 +139,17 @@ Tonyu.klass.define({
             case 0:
             case 1:
               _this.alpha=_this.playerNo==Tonyu.globals.$myNo?64:255;
-              _this.drawText(_this.x-16,_this.y+16,_this.playerNo+"P","rgb(255,255,255)",16);
+              if (_this.otime>=60*20) {
+                _this.alpha*=(60*30-_this.otime)/(60*10);
+              }
+              if (_this.alpha<=0) {
+                _this.alpha=0;
+                
+              } else {
+                _this.drawText(_this.x-12,_this.y+16,(_this.playerNo+1)+"P","rgb(255,255,255)",16);
+                
+              }
+              _this.otime++;
               _this.fiber$update(_thread);
               __pc=2;return;
             case 2:
@@ -139,7 +165,7 @@ Tonyu.klass.define({
       __dummy: false
     };
   },
-  decls: {"methods":{"main":{"nowait":false}},"fields":{"playerNo":{}}}
+  decls: {"methods":{"main":{"nowait":false}},"fields":{"playerNo":{},"otime":{}}}
 });
 Tonyu.klass.define({
   fullName: 'user.MyChar',
@@ -153,15 +179,16 @@ Tonyu.klass.define({
         "use strict";
         var _this=this;
         
-        _this.ox=- 9999;
-        _this.oy=- 9999;
+        _this.otime=Tonyu.globals.$frameCount-60*5+30;
         _this.x=_this.rnd(Tonyu.globals.$screenWidth);
         _this.y=_this.rnd(Tonyu.globals.$screenHeight);
+        _this.ox=_this.x;
+        _this.oy=_this.y;
         _this.alpha=255;
         while (true) {
           Tonyu.checkLoop();
           if (Tonyu.globals.$myNo!=null) {
-            _this.p=Tonyu.globals.$myNo-1;
+            _this.p=Tonyu.globals.$myNo;
           } else {
             _this.p=Tonyu.globals.$pat_base+11;
           }
@@ -177,12 +204,13 @@ Tonyu.klass.define({
           if (_this.getkey(40)||Tonyu.globals.$pad.getDown()) {
             _this.y+=3;
           }
-          _this.x=_this.clamp(0,Tonyu.globals.$screenWidth,_this.x);
-          _this.y=_this.clamp(0,Tonyu.globals.$screenHeight,_this.y);
-          if (_this.x!=_this.ox||_this.y!=_this.oy) {
+          _this.x=_this.clamp(16,Tonyu.globals.$screenWidth-16,_this.x);
+          _this.y=_this.clamp(16,Tonyu.globals.$screenHeight-32,_this.y);
+          if (_this.x!=_this.ox||_this.y!=_this.oy||Tonyu.globals.$frameCount-_this.otime>=60*5) {
             _this.ox=_this.x;
             _this.oy=_this.y;
-            _this.o = {mes: "playerXY",playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y};
+            _this.otime=Tonyu.globals.$frameCount;
+            _this.o = {mes: "playerXY",time: performance.now(),playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y};
             
             Tonyu.globals.$ws.send(JSON.stringify(_this.o));
             
@@ -197,10 +225,11 @@ Tonyu.klass.define({
         //var _arguments=Tonyu.A(arguments);
         var __pc=0;
         
-        _this.ox=- 9999;
-        _this.oy=- 9999;
+        _this.otime=Tonyu.globals.$frameCount-60*5+30;
         _this.x=_this.rnd(Tonyu.globals.$screenWidth);
         _this.y=_this.rnd(Tonyu.globals.$screenHeight);
+        _this.ox=_this.x;
+        _this.oy=_this.y;
         _this.alpha=255;
         
         _thread.enter(function _trc_MyChar_ent_main(_thread) {
@@ -210,7 +239,7 @@ Tonyu.klass.define({
             case 0:
             case 1:
               if (Tonyu.globals.$myNo!=null) {
-                _this.p=Tonyu.globals.$myNo-1;
+                _this.p=Tonyu.globals.$myNo;
               } else {
                 _this.p=Tonyu.globals.$pat_base+11;
               }
@@ -226,12 +255,13 @@ Tonyu.klass.define({
               if (_this.getkey(40)||Tonyu.globals.$pad.getDown()) {
                 _this.y+=3;
               }
-              _this.x=_this.clamp(0,Tonyu.globals.$screenWidth,_this.x);
-              _this.y=_this.clamp(0,Tonyu.globals.$screenHeight,_this.y);
-              if (_this.x!=_this.ox||_this.y!=_this.oy) {
+              _this.x=_this.clamp(16,Tonyu.globals.$screenWidth-16,_this.x);
+              _this.y=_this.clamp(16,Tonyu.globals.$screenHeight-32,_this.y);
+              if (_this.x!=_this.ox||_this.y!=_this.oy||Tonyu.globals.$frameCount-_this.otime>=60*5) {
                 _this.ox=_this.x;
                 _this.oy=_this.y;
-                _this.o = {mes: "playerXY",playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y};
+                _this.otime=Tonyu.globals.$frameCount;
+                _this.o = {mes: "playerXY",time: performance.now(),playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y};
                 
                 Tonyu.globals.$ws.send(JSON.stringify(_this.o));
                 
@@ -251,7 +281,7 @@ Tonyu.klass.define({
       __dummy: false
     };
   },
-  decls: {"methods":{"main":{"nowait":false}},"fields":{"o":{},"ox":{},"oy":{}}}
+  decls: {"methods":{"main":{"nowait":false}},"fields":{"o":{},"otime":{},"ox":{},"oy":{}}}
 });
 Tonyu.klass.define({
   fullName: 'user.WS',
@@ -265,22 +295,25 @@ Tonyu.klass.define({
         "use strict";
         var _this=this;
         
-        _this.sock=new WebSocket("ws://"+Tonyu.globals.$connectURL);
-        _this.sock.addEventListener("open",(function anonymous_159(e) {
+        _this.url = "wss://"+Tonyu.globals.$connectURL+":"+Tonyu.globals.$port;
+        
+        _this.print(_this.url);
+        _this.sock=new WebSocket(_this.url);
+        _this.sock.addEventListener("open",(function anonymous_220(e) {
           
-          _this.print("open");
+          _this.print("open",e);
         }));
-        _this.sock.addEventListener("message",(function anonymous_224(e) {
+        _this.sock.addEventListener("message",(function anonymous_288(e) {
           
           _this.recvProc(e.data);
         }));
-        _this.sock.addEventListener("close",(function anonymous_323(e) {
+        _this.sock.addEventListener("close",(function anonymous_388(e) {
           
-          _this.print("close");
+          _this.print("close",e);
         }));
-        _this.sock.addEventListener("error",(function anonymous_387(e) {
+        _this.sock.addEventListener("error",(function anonymous_455(e) {
           
-          _this.print("error");
+          _this.print("error",e);
         }));
         Tonyu.globals.$mirrorAry=[];
       },
@@ -290,10 +323,13 @@ Tonyu.klass.define({
         //var _arguments=Tonyu.A(arguments);
         var __pc=0;
         
-        _this.sock=new WebSocket("ws://"+Tonyu.globals.$connectURL);
-        _this.sock.addEventListener("open",(function anonymous_159(e) {
+        _this.url = "wss://"+Tonyu.globals.$connectURL+":"+Tonyu.globals.$port;
+        
+        _this.print(_this.url);
+        _this.sock=new WebSocket(_this.url);
+        _this.sock.addEventListener("open",(function anonymous_220(e) {
           
-          _this.print("open");
+          _this.print("open",e);
         }));
         
         _thread.enter(function _trc_WS_ent_main(_thread) {
@@ -301,17 +337,17 @@ Tonyu.klass.define({
           for(var __cnt=100 ; __cnt--;) {
             switch (__pc) {
             case 0:
-              _this.sock.addEventListener("message",(function anonymous_224(e) {
+              _this.sock.addEventListener("message",(function anonymous_288(e) {
                 
                 _this.recvProc(e.data);
               }));
-              _this.sock.addEventListener("close",(function anonymous_323(e) {
+              _this.sock.addEventListener("close",(function anonymous_388(e) {
                 
-                _this.print("close");
+                _this.print("close",e);
               }));
-              _this.sock.addEventListener("error",(function anonymous_387(e) {
+              _this.sock.addEventListener("error",(function anonymous_455(e) {
                 
-                _this.print("error");
+                _this.print("error",e);
               }));
               Tonyu.globals.$mirrorAry=[];
               _thread.exit(_this);return;
@@ -345,29 +381,57 @@ Tonyu.klass.define({
         "use strict";
         var _this=this;
         var obj;
-        var playerNo;
         var m;
+        var o;
+        var playerNo;
         
         obj = JSON.parse(d);
         
         if (obj.mes=="_start") {
           Tonyu.globals.$myNo=obj.playerNo;
-          _this.print("myNo:"+Tonyu.globals.$myNo);
+          _this.print("myNo:"+(Tonyu.globals.$myNo+1)+"P");
           
         } else {
-          if (obj.mes=="playerXY") {
-            playerNo = obj.playerNo;
+          if (obj.mes=="_close") {
+            m = Tonyu.globals.$mirrorAry[obj.playerNo];
             
-            m = Tonyu.globals.$mirrorAry[playerNo-1];
-            
-            if (! m) {
-              m=new Tonyu.classes.user.Mirror({playerNo: playerNo,x: - 999,y: - 999,p: playerNo-1,zOrder: 10});
-              Tonyu.globals.$mirrorAry[playerNo-1]=m;
+            if (m) {
+              m.otime=60*25;
               
             }
-            m.x=obj.x;
-            m.y=obj.y;
+            _this.print("close:",(obj.playerNo+1)+"P");
             
+          } else {
+            if (obj.mes=="_ping") {
+              o = {mes: "_ping"};
+              
+              _this.send(JSON.stringify(obj));
+              
+            } else {
+              if (obj.mes=="playerXY") {
+                playerNo = obj.playerNo;
+                
+                if (playerNo==null) {
+                  return _this;
+                }
+                m = Tonyu.globals.$mirrorAry[playerNo];
+                
+                if (! m) {
+                  _this.print("connect:",(playerNo+1)+"P");
+                  m=new Tonyu.classes.user.Mirror({playerNo: playerNo,x: - 999,y: - 999,p: playerNo,zOrder: 10,otime: 0});
+                  Tonyu.globals.$mirrorAry[playerNo]=m;
+                  
+                }
+                m.x=obj.x;
+                m.y=obj.y;
+                m.otime=0;
+                if (playerNo==Tonyu.globals.$myNo) {
+                  Tonyu.globals.$latency=_this.floor(performance.now()-obj.time);
+                  
+                }
+                
+              }
+            }
           }
         }
       },
@@ -377,38 +441,85 @@ Tonyu.klass.define({
         //var _arguments=Tonyu.A(arguments);
         var __pc=0;
         var obj;
-        var playerNo;
         var m;
+        var o;
+        var playerNo;
         
         obj = JSON.parse(d);
         
-        if (obj.mes=="_start") {
-          Tonyu.globals.$myNo=obj.playerNo;
-          _this.print("myNo:"+Tonyu.globals.$myNo);
-          
-        } else {
-          if (obj.mes=="playerXY") {
-            playerNo = obj.playerNo;
-            
-            m = Tonyu.globals.$mirrorAry[playerNo-1];
-            
-            if (! m) {
-              m=new Tonyu.classes.user.Mirror({playerNo: playerNo,x: - 999,y: - 999,p: playerNo-1,zOrder: 10});
-              Tonyu.globals.$mirrorAry[playerNo-1]=m;
-              
-            }
-            m.x=obj.x;
-            m.y=obj.y;
-            
-          }
-        }
         
-        _thread.retVal=_this;return;
+        _thread.enter(function _trc_WS_ent_recvProc(_thread) {
+          if (_thread.lastEx) __pc=_thread.catchPC;
+          for(var __cnt=100 ; __cnt--;) {
+            switch (__pc) {
+            case 0:
+              if (!(obj.mes=="_start")) { __pc=1     ; break; }
+              {
+                Tonyu.globals.$myNo=obj.playerNo;
+                _this.print("myNo:"+(Tonyu.globals.$myNo+1)+"P");
+              }
+              __pc=9     ;break;
+            case 1     :
+              if (!(obj.mes=="_close")) { __pc=2     ; break; }
+              {
+                m = Tonyu.globals.$mirrorAry[obj.playerNo];
+                
+                if (m) {
+                  m.otime=60*25;
+                  
+                }
+                _this.print("close:",(obj.playerNo+1)+"P");
+              }
+              __pc=8     ;break;
+            case 2     :
+              if (!(obj.mes=="_ping")) { __pc=4     ; break; }
+              o = {mes: "_ping"};
+              
+              _this.fiber$send(_thread, JSON.stringify(obj));
+              __pc=3;return;
+            case 3:
+              
+              __pc=7     ;break;
+            case 4     :
+              if (!(obj.mes=="playerXY")) { __pc=6     ; break; }
+              playerNo = obj.playerNo;
+              
+              if (!(playerNo==null)) { __pc=5     ; break; }
+              _thread.exit(_this);return;
+            case 5     :
+              
+              m = Tonyu.globals.$mirrorAry[playerNo];
+              
+              if (! m) {
+                _this.print("connect:",(playerNo+1)+"P");
+                m=new Tonyu.classes.user.Mirror({playerNo: playerNo,x: - 999,y: - 999,p: playerNo,zOrder: 10,otime: 0});
+                Tonyu.globals.$mirrorAry[playerNo]=m;
+                
+              }
+              m.x=obj.x;
+              m.y=obj.y;
+              m.otime=0;
+              if (playerNo==Tonyu.globals.$myNo) {
+                Tonyu.globals.$latency=_this.floor(performance.now()-obj.time);
+                
+              }
+            case 6     :
+              
+            case 7     :
+              
+            case 8     :
+              
+            case 9     :
+              
+              _thread.exit(_this);return;
+            }
+          }
+        });
       },
       __dummy: false
     };
   },
-  decls: {"methods":{"main":{"nowait":false},"send":{"nowait":false},"recvProc":{"nowait":false}},"fields":{"sock":{}}}
+  decls: {"methods":{"main":{"nowait":false},"send":{"nowait":false},"recvProc":{"nowait":false}},"fields":{"url":{},"sock":{}}}
 });
 
 //# sourceMappingURL=concat.js.map

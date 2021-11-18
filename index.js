@@ -1,46 +1,100 @@
 const WebSocketServer = require("ws").Server;
 const http = require('http');
+const https = require('https');
+const readFileSync = require('fs').readFileSync;
 const express = require('express');
+const performance = require('perf_hooks').performance;
 
 const app = express();
 app.use(express.static(__dirname + '/'));
-var server = http.createServer(app);
-var wss = new WebSocketServer({ server: server });
+const server = https.createServer({
+  cert: readFileSync('key/cert1.pem'),
+  key: readFileSync('key/privkey1.pem')
+}, app);
+const wss = new WebSocketServer({ server: server });
 
 let playerCnt = 0;
+let playerAryMax = 0;
 const playerAry = [];
 
 wss.on("connection", ws => {
   let playerNo = playerAry.length;
   for (i in playerAry) {
     const idx = parseInt(i);
-    console.log(idx);
     if (playerAry[idx] == null) {
       playerNo = idx;
       break;
     }
   }
-  playerAry[playerNo] = ws;
+
+  playerAry[playerNo] = { ws: ws, pingTime: performance.now() };
   console.log(playerAry.length);
 
   playerCnt++;
   console.log("connection", "playerCnt", playerCnt, "playerNo", playerNo);
-  ws.send(JSON.stringify({ mes: "_start", playerCnt: playerCnt, playerNo: playerNo + 1 }));
+  ws.send(JSON.stringify({ mes: "_start", playerCnt: playerCnt, playerNo: playerNo }));
 
   ws.on('message', message => {
-    wss.clients.forEach(client => {
-      client.send(message.toString());
-    });
+    try {
+      // const t1 = performance.now();
+      const mesStr = message.toString();
+      let obj;
+      try {
+        obj = JSON.parse(mesStr);
+      } catch (e) { }
+      if (obj != null && obj.mes == "_ping") {
+        const pos = playerAry.findIndex((client) => client ? client.ws == ws : false);
+        if (pos != -1) playerAry[pos].pingTime = performance.now();
+      } else {
+        playerAry.forEach(client => {
+          if (client != null) {
+            client.ws.send(mesStr);
+          }
+        });
+      }
+      // const t2 = performance.now();
+      // console.log("message send time:", t2 - t1);
+    } catch (e) {
+      console.log("message send error:", e);
+    }
   });
 
   // 接続が切れた場合
-  ws.on('close', ws => {
-    var pos = playerAry.indexOf(ws);
-    if (pos != -1) playerAry[pos] = null;
-    if (playerCnt > 0) playerCnt--;
-    console.log("close", "playerCnt", playerCnt);
+  ws.on('close', ws2 => {
+    const pos = playerAry.findIndex((client) => client ? client.ws == ws : false);
+    console.log("close", "playerCnt", pos);
+    if (pos != -1) {
+      playerAry[pos] = null;
+      if (playerCnt > 0) playerCnt--;
+      const json = JSON.stringify({ mes: "_close", playerNo: pos });
+      playerAry.forEach(client => {
+        if (client != null) client.ws.send(json);
+      });
+    }
   });
 });
 
-server.listen(8888);
-console.log("http://localhost:8888/html");
+const port = 443;
+// const port = 58888;
+server.listen(port);
+console.log("http://localhost:" + port + "/html");
+
+setInterval(() => {
+  const t1 = performance.now();
+  // console.log("setInterval:" + t1);
+  playerAry.forEach(client => {
+    if (client != null) {
+      if (t1 - client.pingTime >= 30000) {
+        const pos = playerAry.findIndex((client2) => client2 ? client2.ws == client.ws : false);
+        if (pos != -1) playerAry[pos] = null;
+        if (playerCnt > 0) playerCnt--;
+        console.log("timeout", "playerCnt", pos);
+      } else {
+        client.ws.send(JSON.stringify({ mes: "_ping" }));
+      }
+    }
+  });
+  for (i in playerAry) {
+    console.log("playerAry", i, "value", playerAry[i] == null ? "null" : t1 - playerAry[i].pingTime);
+  }
+}, 5000);
