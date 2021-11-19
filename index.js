@@ -17,7 +17,8 @@ let playerCnt = 0;
 let playerAryMax = 0;
 const playerAry = [];
 
-wss.on("connection", ws => {
+wss.on("connection", (ws, req) => {
+  const ip = req.socket.remoteAddress;
   let playerNo = playerAry.length;
   for (i in playerAry) {
     const idx = parseInt(i);
@@ -31,7 +32,7 @@ wss.on("connection", ws => {
   console.log(playerAry.length);
 
   playerCnt++;
-  console.log("connection", "playerCnt", playerCnt, "playerNo", playerNo);
+  console.log("connection", "playerCnt", playerCnt, "playerNo", playerNo, "ip", ip);
   ws.send(JSON.stringify({ mes: "_start", playerCnt: playerCnt, playerNo: playerNo }));
 
   ws.on('message', message => {
@@ -94,7 +95,7 @@ setInterval(() => {
       }
     }
   });
-  for (i in playerAry) {
-    console.log("playerAry", i, "value", playerAry[i] == null ? "null" : t1 - playerAry[i].pingTime);
-  }
+  // for (i in playerAry) {
+  //   if (playerAry[i]!=null) console.log("playerAry", i, "value", playerAry[i] == null ? "null" : t1 - playerAry[i].pingTime);
+  // }
 }, 5000);

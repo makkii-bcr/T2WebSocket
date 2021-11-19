@@ -5,7 +5,7 @@ native JSON;
 
 // WebSocketAPI(JavaScriptのAPI)
 var url = "wss://"+$connectURL+":"+$port;
-print(url);
+//print(url);
 sock = new WebSocket(url);
 sock.addEventListener("open", \(e){
     print("open", e);
@@ -58,6 +58,7 @@ $mirrorAry=[];
         m.x = obj.x;
         m.y = obj.y;
         m.otime = 0;
+        m.latency = obj.latency;
         if (playerNo==$myNo) { // ラグを計算
             $latency = floor(performance.now() - obj.time);
         }

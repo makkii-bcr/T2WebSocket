@@ -8,6 +8,7 @@ while(true){
     } else {
         // drawTextEx{x,y:y+16,text:playerNo+"P",size:16,align:"center"};
         drawText(x-12,y+16,(playerNo+1)+"P","rgb(255,255,255)",16);
+        drawText(x-12,y+16+15,(latency)+"ms","rgb(255,255,255)",12);
     }
     otime++;
     update();

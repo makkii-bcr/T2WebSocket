@@ -24,7 +24,8 @@ while(true){
             time:performance.now(),
             playerNo:$myNo,
             x,
-            y
+            y,
+            latency:$latency
         };
         $ws.send(JSON.stringify(o)); // 自分の位置情報を送信する
     }

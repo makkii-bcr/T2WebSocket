@@ -14,7 +14,7 @@ Tonyu.klass.define({
         _this.host = "t2ws.mkbcr.net";
         
         if (WebSite.isNW) {
-          Tonyu.globals.$port=58888;
+          Tonyu.globals.$port=443;
           Tonyu.globals.$connectURL="localhost";
           
         } else {
@@ -26,7 +26,11 @@ Tonyu.klass.define({
         Tonyu.globals.$pad.alpha=0;
         Tonyu.globals.$ws=new Tonyu.classes.user.WS;
         new Tonyu.classes.user.MyChar;
-        Tonyu.globals.$latency="";
+        Tonyu.globals.$latency=0;
+        Tonyu.globals.$latencyMin=30000;
+        Tonyu.globals.$latencyMinTime=performance.now();
+        Tonyu.globals.$latencyMax=0;
+        Tonyu.globals.$latencyMaxTime=performance.now();
         while (true) {
           Tonyu.checkLoop();
           if (_this.getkey(1)==0&&Tonyu.globals.$touches[0].touched==1) {
@@ -34,7 +38,30 @@ Tonyu.klass.define({
             Tonyu.globals.$pad.active=true;
             
           }
-          _this.drawText(Tonyu.globals.$screenWidth-2-200,2,"ping:"+Tonyu.globals.$latency+"ms","rgb(255,255,255)",16);
+          _this.nowTime=performance.now();
+          if (_this.nowTime-Tonyu.globals.$latencyMinTime>=10000) {
+            Tonyu.globals.$latencyMin=Tonyu.globals.$latency;
+            Tonyu.globals.$latencyMinTime=_this.nowTime;
+            
+          }
+          if (_this.nowTime-Tonyu.globals.$latencyMaxTime>=10000) {
+            Tonyu.globals.$latencyMax=Tonyu.globals.$latency;
+            Tonyu.globals.$latencyMaxTime=_this.nowTime;
+            
+          }
+          if (Tonyu.globals.$latency<Tonyu.globals.$latencyMin) {
+            Tonyu.globals.$latencyMin=Tonyu.globals.$latency;
+            Tonyu.globals.$latencyMinTime=_this.nowTime;
+            
+          }
+          if (Tonyu.globals.$latency>Tonyu.globals.$latencyMax) {
+            Tonyu.globals.$latencyMax=Tonyu.globals.$latency;
+            Tonyu.globals.$latencyMaxTime=_this.nowTime;
+            
+          }
+          _this.drawText(Tonyu.globals.$screenWidth-2-150,2,"ping:"+Tonyu.globals.$latency+"ms","rgb(255,255,255)",16);
+          _this.drawText(Tonyu.globals.$screenWidth-2-150,2+20,"pingMin:"+Tonyu.globals.$latencyMin+"ms","rgb(255,255,255)",16);
+          _this.drawText(Tonyu.globals.$screenWidth-2-150,2+40,"pingMax:"+Tonyu.globals.$latencyMax+"ms","rgb(255,255,255)",16);
           _this.update();
           
         }
@@ -58,7 +85,7 @@ Tonyu.klass.define({
               _this.host = "t2ws.mkbcr.net";
               
               if (WebSite.isNW) {
-                Tonyu.globals.$port=58888;
+                Tonyu.globals.$port=443;
                 Tonyu.globals.$connectURL="localhost";
                 
               } else {
@@ -70,14 +97,41 @@ Tonyu.klass.define({
               Tonyu.globals.$pad.alpha=0;
               Tonyu.globals.$ws=new Tonyu.classes.user.WS;
               new Tonyu.classes.user.MyChar;
-              Tonyu.globals.$latency="";
+              Tonyu.globals.$latency=0;
+              Tonyu.globals.$latencyMin=30000;
+              Tonyu.globals.$latencyMinTime=performance.now();
+              Tonyu.globals.$latencyMax=0;
+              Tonyu.globals.$latencyMaxTime=performance.now();
             case 2:
               if (_this.getkey(1)==0&&Tonyu.globals.$touches[0].touched==1) {
                 Tonyu.globals.$pad.alpha=255;
                 Tonyu.globals.$pad.active=true;
                 
               }
-              _this.drawText(Tonyu.globals.$screenWidth-2-200,2,"ping:"+Tonyu.globals.$latency+"ms","rgb(255,255,255)",16);
+              _this.nowTime=performance.now();
+              if (_this.nowTime-Tonyu.globals.$latencyMinTime>=10000) {
+                Tonyu.globals.$latencyMin=Tonyu.globals.$latency;
+                Tonyu.globals.$latencyMinTime=_this.nowTime;
+                
+              }
+              if (_this.nowTime-Tonyu.globals.$latencyMaxTime>=10000) {
+                Tonyu.globals.$latencyMax=Tonyu.globals.$latency;
+                Tonyu.globals.$latencyMaxTime=_this.nowTime;
+                
+              }
+              if (Tonyu.globals.$latency<Tonyu.globals.$latencyMin) {
+                Tonyu.globals.$latencyMin=Tonyu.globals.$latency;
+                Tonyu.globals.$latencyMinTime=_this.nowTime;
+                
+              }
+              if (Tonyu.globals.$latency>Tonyu.globals.$latencyMax) {
+                Tonyu.globals.$latencyMax=Tonyu.globals.$latency;
+                Tonyu.globals.$latencyMaxTime=_this.nowTime;
+                
+              }
+              _this.drawText(Tonyu.globals.$screenWidth-2-150,2,"ping:"+Tonyu.globals.$latency+"ms","rgb(255,255,255)",16);
+              _this.drawText(Tonyu.globals.$screenWidth-2-150,2+20,"pingMin:"+Tonyu.globals.$latencyMin+"ms","rgb(255,255,255)",16);
+              _this.drawText(Tonyu.globals.$screenWidth-2-150,2+40,"pingMax:"+Tonyu.globals.$latencyMax+"ms","rgb(255,255,255)",16);
               _this.fiber$update(_thread);
               __pc=3;return;
             case 3:
@@ -93,7 +147,7 @@ Tonyu.klass.define({
       __dummy: false
     };
   },
-  decls: {"methods":{"main":{"nowait":false}},"fields":{"host":{}}}
+  decls: {"methods":{"main":{"nowait":false}},"fields":{"host":{},"nowTime":{}}}
 });
 Tonyu.klass.define({
   fullName: 'user.Mirror',
@@ -118,6 +172,7 @@ Tonyu.klass.define({
             
           } else {
             _this.drawText(_this.x-12,_this.y+16,(_this.playerNo+1)+"P","rgb(255,255,255)",16);
+            _this.drawText(_this.x-12,_this.y+16+15,(_this.latency)+"ms","rgb(255,255,255)",12);
             
           }
           _this.otime++;
@@ -147,6 +202,7 @@ Tonyu.klass.define({
                 
               } else {
                 _this.drawText(_this.x-12,_this.y+16,(_this.playerNo+1)+"P","rgb(255,255,255)",16);
+                _this.drawText(_this.x-12,_this.y+16+15,(_this.latency)+"ms","rgb(255,255,255)",12);
                 
               }
               _this.otime++;
@@ -165,7 +221,7 @@ Tonyu.klass.define({
       __dummy: false
     };
   },
-  decls: {"methods":{"main":{"nowait":false}},"fields":{"playerNo":{},"otime":{}}}
+  decls: {"methods":{"main":{"nowait":false}},"fields":{"playerNo":{},"otime":{},"latency":{}}}
 });
 Tonyu.klass.define({
   fullName: 'user.MyChar',
@@ -210,7 +266,7 @@ Tonyu.klass.define({
             _this.ox=_this.x;
             _this.oy=_this.y;
             _this.otime=Tonyu.globals.$frameCount;
-            _this.o = {mes: "playerXY",time: performance.now(),playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y};
+            _this.o = {mes: "playerXY",time: performance.now(),playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y,latency: Tonyu.globals.$latency};
             
             Tonyu.globals.$ws.send(JSON.stringify(_this.o));
             
@@ -261,7 +317,7 @@ Tonyu.klass.define({
                 _this.ox=_this.x;
                 _this.oy=_this.y;
                 _this.otime=Tonyu.globals.$frameCount;
-                _this.o = {mes: "playerXY",time: performance.now(),playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y};
+                _this.o = {mes: "playerXY",time: performance.now(),playerNo: Tonyu.globals.$myNo,x: _this.x,y: _this.y,latency: Tonyu.globals.$latency};
                 
                 Tonyu.globals.$ws.send(JSON.stringify(_this.o));
                 
@@ -297,21 +353,20 @@ Tonyu.klass.define({
         
         _this.url = "wss://"+Tonyu.globals.$connectURL+":"+Tonyu.globals.$port;
         
-        _this.print(_this.url);
         _this.sock=new WebSocket(_this.url);
-        _this.sock.addEventListener("open",(function anonymous_220(e) {
+        _this.sock.addEventListener("open",(function anonymous_222(e) {
           
           _this.print("open",e);
         }));
-        _this.sock.addEventListener("message",(function anonymous_288(e) {
+        _this.sock.addEventListener("message",(function anonymous_290(e) {
           
           _this.recvProc(e.data);
         }));
-        _this.sock.addEventListener("close",(function anonymous_388(e) {
+        _this.sock.addEventListener("close",(function anonymous_390(e) {
           
           _this.print("close",e);
         }));
-        _this.sock.addEventListener("error",(function anonymous_455(e) {
+        _this.sock.addEventListener("error",(function anonymous_457(e) {
           
           _this.print("error",e);
         }));
@@ -325,9 +380,8 @@ Tonyu.klass.define({
         
         _this.url = "wss://"+Tonyu.globals.$connectURL+":"+Tonyu.globals.$port;
         
-        _this.print(_this.url);
         _this.sock=new WebSocket(_this.url);
-        _this.sock.addEventListener("open",(function anonymous_220(e) {
+        _this.sock.addEventListener("open",(function anonymous_222(e) {
           
           _this.print("open",e);
         }));
@@ -337,15 +391,15 @@ Tonyu.klass.define({
           for(var __cnt=100 ; __cnt--;) {
             switch (__pc) {
             case 0:
-              _this.sock.addEventListener("message",(function anonymous_288(e) {
+              _this.sock.addEventListener("message",(function anonymous_290(e) {
                 
                 _this.recvProc(e.data);
               }));
-              _this.sock.addEventListener("close",(function anonymous_388(e) {
+              _this.sock.addEventListener("close",(function anonymous_390(e) {
                 
                 _this.print("close",e);
               }));
-              _this.sock.addEventListener("error",(function anonymous_455(e) {
+              _this.sock.addEventListener("error",(function anonymous_457(e) {
                 
                 _this.print("error",e);
               }));
@@ -425,6 +479,7 @@ Tonyu.klass.define({
                 m.x=obj.x;
                 m.y=obj.y;
                 m.otime=0;
+                m.latency=obj.latency;
                 if (playerNo==Tonyu.globals.$myNo) {
                   Tonyu.globals.$latency=_this.floor(performance.now()-obj.time);
                   
@@ -499,6 +554,7 @@ Tonyu.klass.define({
               m.x=obj.x;
               m.y=obj.y;
               m.otime=0;
+              m.latency=obj.latency;
               if (playerNo==Tonyu.globals.$myNo) {
                 Tonyu.globals.$latency=_this.floor(performance.now()-obj.time);
                 

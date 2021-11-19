@@ -1,5 +1,6 @@
 native window;
 native WebSite;
+native performance;
 
 updateEx(5);
 
@@ -7,7 +8,7 @@ updateEx(5);
 var host = "t2ws.mkbcr.net";
 
 if(WebSite.isNW){
-    $port=58888;
+    $port=443;
     $connectURL="localhost";
 }else{
     $port=443;
@@ -21,13 +22,22 @@ $pad.alpha=0;
 $ws=new WS;
 new MyChar;
 
-$latency="";
+$latency=0;
+$latencyMin=30000;$latencyMinTime=performance.now();
+$latencyMax=0;$latencyMaxTime=performance.now();
 while(true){
     if(getkey(1)==0&&$touches[0].touched==1){
         $pad.alpha=255;
         $pad.active=true;
     }
     // drawTextEx{x:$screenWidth-2,y:2,text:"latency:"+$latency+"ms",size:16,align:"right"};
-    drawText($screenWidth-2-200,2,"ping:"+$latency+"ms","rgb(255,255,255)",16);
+    nowTime = performance.now();
+    if (nowTime - $latencyMinTime >= 10000) { $latencyMin=$latency; $latencyMinTime=nowTime; }
+    if (nowTime - $latencyMaxTime >= 10000) { $latencyMax=$latency; $latencyMaxTime=nowTime; }
+    if ($latency < $latencyMin) { $latencyMin=$latency; $latencyMinTime=nowTime; }
+    if ($latency > $latencyMax) { $latencyMax=$latency; $latencyMaxTime=nowTime; }
+    drawText($screenWidth-2-150,2,"ping:"+$latency+"ms","rgb(255,255,255)",16);
+    drawText($screenWidth-2-150,2+20,"pingMin:"+$latencyMin+"ms","rgb(255,255,255)",16);
+    drawText($screenWidth-2-150,2+40,"pingMax:"+$latencyMax+"ms","rgb(255,255,255)",16);
     update();
 }
