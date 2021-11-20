@@ -8,39 +8,51 @@ const performance = require('perf_hooks').performance;
 const app = express();
 app.use(express.static(__dirname + '/'));
 // HTTPS
-const server1 = https.createServer({
+const serverS = https.createServer({
     cert: readFileSync('key/cert1.pem'),
     key: readFileSync('key/privkey1.pem')
 }, app);
-const wss1 = new WebSocketServer({ server: server1 });
+const wssS = new WebSocketServer({ server: serverS });
 // HTTP
-const server2 = http.createServer(app);
-const wss2 = new WebSocketServer({ server: server2 });
+const serverN = http.createServer(app);
+const wssN = new WebSocketServer({ server: serverN });
 
-let playerCnt = 0;
-const playerAry = [];
+const spaceAry = [];
 
-setupServer(server1, wss1, 443);
-setupServer(server2, wss2, 80);
+setupServer(serverS, wssS, 443);
+setupServer(serverN, wssN, 80);
 
 function setupServer(server, wss, port) {
     wss.on("connection", (ws, req) => {
-        const ip = req.socket.remoteAddress;
-        let playerNo = playerAry.length;
-        for (i in playerAry) {
-            const idx = parseInt(i);
-            if (playerAry[idx] == null) {
-                playerNo = idx;
-                break;
-            }
+        const clientIp = req.socket.remoteAddress;
+        const clientPort = req.socket.remotePort;
+        const pathname = req.url;
+
+        // 新しいpathnameに空間を作る
+        const pathnameIdx = Object.keys(spaceAry).findIndex((key) => key == pathname);
+        if (pathnameIdx == -1) {
+            spaceAry[pathname] = {
+                playerCnt: 0,
+                playerAry: []
+            };
         }
 
-        playerAry[playerNo] = { ws: ws, pingTime: performance.now() };
+        const space = spaceAry[pathname];
+        const playerAry = space.playerAry;
+
+        let playerNo = playerAry.findIndex((value) => value == null);
+        playerNo = playerNo == -1 ? playerAry.length : playerNo;
+        playerAry[playerNo] = {
+            ws: ws,
+            pingTime: performance.now(),
+            ip: clientIp,
+            port: clientPort,
+        };
         // console.log(playerAry.length);
 
-        playerCnt++;
-        console.log("connection", "playerCnt", playerCnt, "playerNo", playerNo, "ip", ip);
-        ws.send(JSON.stringify({ mes: "_start", playerCnt: playerCnt, playerNo: playerNo }));
+        space.playerCnt++;
+        console.log("connection", "playerCnt", space.playerCnt, "playerNo", playerNo, "ip", clientIp, "port", clientPort, "pathname", pathname);
+        ws.send(JSON.stringify({ mes: "_start", playerCnt: space.playerCnt, playerNo: playerNo }));
 
         ws.on('message', message => {
             try {
@@ -73,7 +85,7 @@ function setupServer(server, wss, port) {
             console.log("close", "playerCnt", pos);
             if (pos != -1) {
                 playerAry[pos] = null;
-                if (playerCnt > 0) playerCnt--;
+                if (space.playerCnt > 0) space.playerCnt--;
                 const json = JSON.stringify({ mes: "_close", playerNo: pos });
                 playerAry.forEach(client => {
                     if (client != null) client.ws.send(json);
@@ -82,28 +94,43 @@ function setupServer(server, wss, port) {
         });
     });
 
-    // const port = 443;
-    // const port = 58888;
     server.listen(port);
-    console.log("http://localhost:" + port + "/html");
+    console.log("server listen port:" + port);
+}
 
-    setInterval(() => {
-        const t1 = performance.now();
-        // console.log("setInterval:" + t1);
+// 生存確認
+setInterval(() => {
+    const t1 = performance.now();
+    // console.log("setInterval:" + t1);
+    Object.values(spaceAry).forEach(space => {
+        const playerAry = space.playerAry;
         playerAry.forEach(client => {
             if (client != null) {
                 if (t1 - client.pingTime >= 30000) {
                     const pos = playerAry.findIndex((client2) => client2 ? client2.ws == client.ws : false);
-                    if (pos != -1) playerAry[pos] = null;
-                    if (playerCnt > 0) playerCnt--;
+                    if (pos != -1) {
+                        playerAry[pos] = null;
+                        if (space.playerCnt > 0) space.playerCnt--;
+                    }
                     console.log("timeout", "playerCnt", pos);
                 } else {
                     client.ws.send(JSON.stringify({ mes: "_ping" }));
                 }
             }
         });
-        // for (i in playerAry) {
-        //   if (playerAry[i]!=null) console.log("playerAry", i, "value", playerAry[i] == null ? "null" : t1 - playerAry[i].pingTime);
-        // }
-    }, 5000);
-}
+    });
+
+    // 全部屋出力
+    if (false) { // debug log
+        Object.keys(spaceAry).forEach(key => {
+            const space = spaceAry[key];
+            // console.log("space:", key, "playerCnt:", space.playerCnt);
+            space.playerAry.forEach((client, clientI) => {
+                if (client != null) {
+                    console.log("space:", key, "playerNo:", clientI, "pingTime:", client == null ? "null" : t1 - client.pingTime, "ip:", client.ip, "port", client.port);
+                }
+            });
+        });
+    }
+}, 5000);
+
