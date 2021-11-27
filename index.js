@@ -1,3 +1,4 @@
+const WebSocket = require("ws");
 const WebSocketServer = require("ws").Server;
 const http = require('http');
 const https = require('https');
@@ -78,11 +79,11 @@ function setupServer(server, wss, port) {
         }));
 
         // メッセージ受信
-        ws.on('message', message => {
+        ws.on('message', (message, isBinary) => {
             try {
                 // メッセージが来たら全員にばらまく
                 playerObj.pingTime = performance.now();
-                sendEvery(playerAry, message.toString());
+                sendEvery(playerAry, message, isBinary);
             } catch (e) {
                 console.log("message send error:", e);
             }
@@ -171,9 +172,12 @@ setInterval(() => {
 }, 1000);
 
 
-function sendEvery(playerAry, sendStr) {
+function sendEvery(playerAry, sendStr, isBinary) {
+    isBinary = isBinary || false;
     playerAry.forEach(client => {
-        if (client != null) client.ws.send(sendStr);
+        if (client != null && client.ws.readyState === WebSocket.OPEN) {
+            client.ws.send(sendStr, { binary: isBinary });
+        }
     });
 }
 
