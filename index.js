@@ -94,7 +94,7 @@ function setupServer(server, wss, port) {
             if (playerObj.isClose) return;
             const pos = playerAry.findIndex((client) => client ? client.ws == ws : false);
             console.log(
-                "close",
+                "close     ",
                 "playerNo", pos,
                 "ip", clientIp,
                 "port", clientPort,
@@ -131,7 +131,7 @@ setInterval(() => {
                     // タイムアウトで切断
                     const pos = playerAry.findIndex((client2) => client2 ? client2.ws == client.ws : false);
                     console.log(
-                        "timeout",
+                        "timeout   ",
                         "playerNo", pos,
                         "ip", client.ip,
                         "port", client.port,
