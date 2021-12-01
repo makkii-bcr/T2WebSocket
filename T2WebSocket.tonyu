@@ -1,0 +1,102 @@
+// T2WebSocket 1.0
+// Tonyu2でWebSocketを使うためのライブラリ
+
+extends null;
+native WebSocket;
+native performance;
+native console;
+native JSON;
+native Date;
+native String;
+native ArrayBuffer;
+native Blob;
+native DataView;
+
+var sock = null;
+var onOpen = null;
+var onClose = null;
+var onError = null;
+var onMessage = null;
+
+\connect(url) {
+    if (sock) return;
+    try {
+        sock = new WebSocket(url);
+        sock.addEventListener("open", \(e) {
+            if (onOpen) onOpen(e);
+        });
+        sock.addEventListener("message", \(e) {
+            recv(e.data);
+        });
+        sock.addEventListener("close", \(e) {
+            if (onClose) onClose(e);
+            sock = null;
+        });
+        sock.addEventListener("error", \(e) {
+            if (onError) onError(e);
+        });
+    } catch (e) {
+        console.log("websocket connect error", e);
+    }
+}
+
+\close() {
+    if (sock) {
+        sock.close();
+        sock = null;
+    }
+}
+
+\send(d) {
+    if (sock && sock.readyState == 1) { // WebSocket.OPEN
+        if (
+        d is String ||
+        d is ArrayBuffer ||
+        d is Blob ||
+        _isTypedArray(d)
+        ) {
+            sock.send(d);
+        } else if (d is Object) {
+            sock.send(JSON.stringify(d));
+        } else {
+            sock.send(d);
+        }
+    }
+}
+
+\recv(d) {
+    try {
+        var obj = JSON.parse(d);
+        if (onMessage) {
+            onMessage(obj);
+        }
+    } catch (e) {
+        if (onMessage) {
+            onMessage(d);
+        }
+    }
+}
+
+// 接続開始通知のコールバックをセットするメソッド
+\setOnOpenListener(l) {
+    onOpen = l;
+}
+
+// データ受信のコールバックをセットするメソッド
+\setOnMessageListener(l) {
+    onMessage = l;
+}
+
+// 切断通知コールバックをセットするメソッド
+\setOnCloseListener(l) {
+    onClose = l;
+}
+
+// エラーのコールバックをセットするメソッド
+\setOnErrorListener(l) {
+    onError = l;
+}
+
+\_isTypedArray(value) {
+    return ArrayBuffer.isView(value) && !(value instanceof DataView);
+}
