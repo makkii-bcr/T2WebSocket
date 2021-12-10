@@ -24,7 +24,7 @@ Tonyu2でオンライン通信できるので、ネットゲームなどを作�
 
 ### クライアント
 
-```
+```javascript
 // 接続
 // 「ws://」「wss://」で始まるURLを指定する
 connect(url)
@@ -56,7 +56,7 @@ setOnErrorListener(function(event))
 サーバーからは、以下のようなデータが送られてきます。
 
 クライアントが接続したとき
-```
+```javascript
 {
     mes: "_start",
     playerCnt: 接続人数(数値),
@@ -66,7 +66,7 @@ setOnErrorListener(function(event))
 ```
 
 自分または他のクライアントが接続したとき
-```
+```javascript
 {
     mes: "_connection",
     playerNo: 該当クライアントのプレイヤー番号(数値),
@@ -75,7 +75,7 @@ setOnErrorListener(function(event))
 ```
 
 自分または他のクライアントが切断したとき
-```
+```javascript
 {
     mes: "_close",
     playerNo: 該当クライアントのプレイヤー番号(数値),
