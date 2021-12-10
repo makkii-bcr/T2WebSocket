@@ -1,7 +1,7 @@
 # T2WebSocket
 
-Tonyu System 2 でWebSocketを使うためのライブラリです。
-Tonyu2でオンライン通信できるので、ネットゲームなどを作ることができます。
+Tonyu System 2 でWebSocket通信機能を使うためのライブラリです。
+ネットゲームなどを作ることができます。
 
 サーバー側プログラムはindex.js（Node.js製）、  
 クライアント側プログラムはT2WebSocket.tonyu（Tonyu2製）です。
@@ -25,17 +25,23 @@ Tonyu2でオンライン通信できるので、ネットゲームなどを作�
 ### クライアント
 
 ```javascript
+// T2WebSocket.tonyu
+
 // 接続
-// 「ws://」「wss://」で始まるURLを指定する
-connect(url)
+// roomName: ルーム名（英数字であれば好きな名前を指定できます）
+//           省略するとルーム名なしになります
+// url: 「ws://」「wss://」で始まるURLを指定します
+//      URLを省略すると、デフォルトの「wss://t2.mkbcr.net/...」に接続します
+// ※ roomNameとurlが同じゲーム同士で通信ができます。
+connect(roomName, url)
 
 // 切断
 close()
 
 // データを送信
-// sendには、Object、Array、文字列、数値、バイナリデータ(JavaScriptのUint8Array等)などを送れる
-// ObjectかArrayを指定した場合、内部でJsonに変換して送る
-// 送ったデータは同じゲームに接続した全員（自分も含め）に配られる
+// sendには、Object、Array、文字列、数値、バイナリデータ(JavaScriptのUint8Array等)などを送れます
+// ObjectかArrayを指定した場合、内部でJsonに変換して送ります
+// 送ったデータは同じゲームに接続した全員（自分も含め）に配られます
 send(d)
 
 // 接続開始通知のコールバックをセットするメソッド
@@ -64,6 +70,7 @@ setOnErrorListener(function(event))
     serverTime: サーバーの時刻(UnixTime(ミリ秒)(UTC))
 }
 ```
+接続人数(playerCnt)は、あまり正確ではないかもしれません。（クライアントが切断通知を送らない場合があるので、その場合タイムアウト(30秒)になるまでサーバー側ではクライアントがいると判断するため）
 
 自分または他のクライアントが接続したとき
 ```javascript
@@ -82,3 +89,111 @@ setOnErrorListener(function(event))
     serverTime: サーバーの時刻(UnixTime(ミリ秒)(UTC))
 }
 ```
+
+## クライアントのサンプル
+
+Tonyu2プロジェクトに、あらかじめT2WebSocket.tonyuを追加してください。
+
+１人で接続テストする場合は、ブラウザを複数ウィンドウ開いて実行してください。
+
+短めに書いた版
+
+```javascript
+// Main.tonyu
+$t2ws = new T2WebSocket;
+$t2ws.connect("myroom");
+$t2ws.setOnMessageListener(\(obj) {
+    if (obj.mes == "_start") { // 通信開始時の情報
+        sendEvent("connect"); // 接続通知を送る
+    } else if (obj.mes == "test") { // データを受信する
+        print(obj.mes, obj.text);
+    }
+});
+waitEvent("connect"); // 接続通知が来るまで待つ
+
+// データを送信する
+$t2ws.send({
+    mes: "test",
+    text: "hello T2WebSocket"
+});
+```
+
+もう少ししっかり書いた版
+
+```javascript
+// Main.tonyu
+$t2ws = new T2WebSocket;
+$t2ws.connect();
+$t2ws.setOnOpenListener(\(e) {
+    print("open");
+});
+$t2ws.setOnCloseListener(\(e) {
+    print("close");
+});
+$t2ws.setOnErrorListener(\(e) {
+    print("error");
+});
+$t2ws.setOnMessageListener(\(obj) {
+    if (obj.mes == "_start") { // 通信開始時の情報
+        print("_start:" + (obj.playerNo + 1) + "P");
+        sendEvent("connect"); // 接続通知を送る
+        
+    } else if (obj.mes == "_connection") { // 自分または誰かが、接続した（自分より先に接続した人は通知されない）
+        print("_connect:", (obj.playerNo + 1) + "P");
+        
+    } else if (obj.mes == "_close") { // 自分または誰かが、切断・タイムアウトした（自分より後に切断した人は通知されない）
+        print("_close:", (obj.playerNo + 1) + "P");
+        
+    } else { // データを受信する（他の人から送信したデータ or 自分が送信したデータが来る）
+        print(obj.mes, obj.text);
+    }
+});
+waitEvent("connect"); // 接続通知が来るまで待つ
+
+// データを送信する
+$t2ws.send({
+    mes: "test",
+    text: "hello T2WebSocket"
+});
+```
+
+キーボードをキーを押すとキーIDを送信する
+（Tonyu2の拡張構文も使う）
+
+```javascript
+// Main.tonyu
+$t2ws = new T2WebSocket;
+$t2ws.connect();
+$t2ws.setOnOpenListener \(e) { print("open"); };
+$t2ws.setOnCloseListener \(e) { print("close"); };
+$t2ws.setOnErrorListener \(e) { print("error"); };
+$t2ws.setOnMessageListener \(obj) {
+    if (obj.mes == "_start") {
+        print("_start:" + (obj.playerNo + 1) + "P");
+        $myNo = obj.playerNo;
+        sendEvent("connect"); // 接続通知を送る
+    } else if (obj.mes == "_connection") {
+        print("_connect:", (obj.playerNo + 1) + "P");
+    } else if (obj.mes == "_close") {
+        print("_close:", (obj.playerNo + 1) + "P");
+    } else { // プレイヤー番号と受信データを表示する
+        print((obj.playerNo + 1) + "P", obj.mes, obj.keyID);
+    }
+};
+waitEvent("connect"); // 接続通知が来るまで待つ
+
+while (true) {
+    for (var i=1; i<240; i++) {
+        if (getkey(i) == 1) {
+            // 押したキーのIDを送信する
+            $t2ws.send{
+                playerNo: $myNo,
+                mes: "key",
+                keyID: i
+            };
+        }
+    }
+    update();
+}
+```
+

@@ -1,9 +1,8 @@
-// T2WebSocket 1.0
+// T2WebSocket 1.1.0
 // Tonyu2でWebSocketを使うためのライブラリ
 
 extends null;
 native WebSocket;
-native performance;
 native console;
 native JSON;
 native Date;
@@ -11,6 +10,7 @@ native String;
 native ArrayBuffer;
 native Blob;
 native DataView;
+native location;
 
 var sock = null;
 var onOpen = null;
@@ -18,9 +18,25 @@ var onClose = null;
 var onError = null;
 var onMessage = null;
 
-\connect(url) {
+\connect(roomName, url) {
     if (sock) return;
     try {
+        if (url == null) { // URLが指定されていな場合、デフォルトのURLに接続する
+            var prjPath = $currentProject.getDir()._path;
+            prjPath = prjPath ? prjPath.match("/[^/]+/$") : null;
+            prjPath = prjPath ? prjPath[0] : ""; // "C:/Tonyu2/Projects/t2websocket/" -> "/t2websocket/"
+
+            var wsProtocol = "wss"; // ws:http用(暗号化なし), wss:https用(暗号化あり) 
+            var wsHost = "t2ws.mkbcr.net"; // WebSocketのサーバープログラムがある接続先
+            var wsPort = 443;
+            var wsPathName = location.hostname + location.pathname + prjPath; // ここの名前が同じゲーム同士で、通信を共有し合います
+
+            var url = wsProtocol + "://" + wsHost + ":" + wsPort + "/" + wsPathName;
+        }
+        if (roomName == null) roomName = "";
+        url = url + roomName;
+        //console.log(url);
+        
         sock = new WebSocket(url);
         sock.addEventListener("open", \(e) {
             if (onOpen) onOpen(e);
