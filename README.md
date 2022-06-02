@@ -11,6 +11,7 @@ Tonyu System 2 でWebSocket通信機能を使うためのライブラリです�
 
 ## 利用しているゲーム
 - [「キラキラ対戦」](https://www.tonyu.jp/project/viewProject.cgi?mainkey=894&)
+- [「ゼゴロレース」](https://www.tonyu.jp/project/viewProject.cgi?mainkey=907&)
 
 ## 仕様
 - サーバーの基本動作としては、クライアントからデータ送信を受けると、全員にそのデータを配るだけです
