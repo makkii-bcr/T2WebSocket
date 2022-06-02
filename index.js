@@ -5,27 +5,31 @@ const https = require('https');
 const readFileSync = require('fs').readFileSync;
 const performance = require('perf_hooks').performance;
 
+// Config
 const timeOutTime = 30000;
 
 // HTTPS
-const serverS = https.createServer({
-    cert: readFileSync('key/cert1.pem'),
-    key: readFileSync('key/privkey1.pem')
-});
-const wssS = new WebSocketServer({ server: serverS });
+if (false) {
+    const serverS = https.createServer({
+        cert: readFileSync('key/cert1.pem'),
+        key: readFileSync('key/privkey1.pem')
+    });
+    const wssS = new WebSocketServer({ server: serverS });
+    setupServer(serverS, wssS, 443);
+}
 // HTTP
-// const serverN = http.createServer();
-// const wssN = new WebSocketServer({ server: serverN });
+if (true) {
+    const serverN = http.createServer();
+    const wssN = new WebSocketServer({ server: serverN });
+    setupServer(serverN, wssN, 80);
+}
 
 const spaceAry = [];
-
-setupServer(serverS, wssS, 443);
-// setupServer(serverN, wssN, 80);
 
 function setupServer(server, wss, port) {
     wss.on("connection", (ws, req) => {
         const clientFamily = req.socket.remoteFamily;
-        const clientIp = req.socket.remoteAddress;
+        const clientIp = req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const clientPort = req.socket.remotePort;
         const pathname = req.url;
 
@@ -55,6 +59,7 @@ function setupServer(server, wss, port) {
         // console.log(playerAry.length);
         space.playerCnt++;
         console.log(
+            getDate(),
             "connection",
             // "playerCnt", space.playerCnt,
             "playerNo", playerNo,
@@ -85,7 +90,7 @@ function setupServer(server, wss, port) {
                 playerObj.pingTime = performance.now();
                 sendEvery(playerAry, message, isBinary);
             } catch (e) {
-                console.log("message send error:", e);
+                console.log(getDate(), "message send error:", e);
             }
         });
 
@@ -94,6 +99,7 @@ function setupServer(server, wss, port) {
             if (playerObj.isClose) return;
             const pos = playerAry.findIndex((client) => client ? client.ws == ws : false);
             console.log(
+                getDate(),
                 "close     ",
                 "playerNo", pos,
                 "ip", clientIp,
@@ -114,7 +120,7 @@ function setupServer(server, wss, port) {
     });
 
     server.listen(port);
-    console.log("server listen port:" + port);
+    console.log(getDate(), "server listen port:" + port);
 }
 
 // 生存確認
@@ -131,6 +137,7 @@ setInterval(() => {
                     // タイムアウトで切断
                     const pos = playerAry.findIndex((client2) => client2 ? client2.ws == client.ws : false);
                     console.log(
+                        getDate(),
                         "timeout   ",
                         "playerNo", pos,
                         "ip", client.ip,
@@ -171,7 +178,6 @@ setInterval(() => {
     }
 }, 1000);
 
-
 function sendEvery(playerAry, sendStr, isBinary) {
     isBinary = isBinary || false;
     playerAry.forEach(client => {
@@ -181,3 +187,6 @@ function sendEvery(playerAry, sendStr, isBinary) {
     });
 }
 
+function getDate() {
+    return "["+new Date().toLocaleString('sv')+"]";
+}

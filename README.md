@@ -31,7 +31,7 @@ Tonyu System 2 でWebSocket通信機能を使うためのライブラリです�
 // roomName: ルーム名（英数字であれば好きな名前を指定できます）
 //           省略するとルーム名なしになります
 // url: 「ws://」「wss://」で始まるURLを指定します
-//      URLを省略すると、デフォルトの「wss://t2.mkbcr.net/...」に接続します
+//      URLを省略すると、デフォルトの「wss://t2ws.mkbcr.net/...」に接続します
 // ※ roomNameとurlが同じゲーム同士で通信ができます。
 connect(roomName, url)
 
