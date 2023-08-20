@@ -1,7 +1,7 @@
 # T2WebSocket
 
-Tonyu System 2 でWebSocket通信機能を使うためのライブラリです。
-ネットゲームなどを作ることができます。
+Tonyu System 2 でWebSocket通信機能を使うためのライブラリです。  
+オンラインゲーム（リアルタイムで通信するゲーム）などを作ることができます。
 
 サーバー側プログラムはindex.js（Node.js製）、  
 クライアント側プログラムはT2WebSocket.tonyu（Tonyu2製）です。
@@ -12,6 +12,8 @@ Tonyu System 2 でWebSocket通信機能を使うためのライブラリです�
 ## 利用しているゲーム
 - [「キラキラ対戦」](https://www.tonyu.jp/project/viewProject.cgi?mainkey=894&)
 - [「ゼゴロレース」](https://www.tonyu.jp/project/viewProject.cgi?mainkey=907&)
+- [「かけタル～」](https://www.tonyu.jp/project/viewProject.cgi?mainkey=921&)
+- [「まわりひ」](https://www.tonyu.jp/project/viewProject.cgi?mainkey=926&)
 
 ## 仕様
 - サーバーの基本動作としては、クライアントからデータ送信を受けると、全員にそのデータを配るだけです
